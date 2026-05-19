@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>??? ????? ???</title>
+    <style>
+        /* CSS ??????? ??????? */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 400px;
+            max-width: 95%;
+            height: 600px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ??? ???????? */
+        .chat-header {
+            background: #0078ff;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* ????? ??????? */
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f9f9f9;
+        }
+
+        /* ????? ??????? */
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-right-radius: 3px;
+        }
+
+        .user-message {
+            background: #0078ff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-left-radius: 3px;
+        }
+
+        /* ????? ??????? */
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            background: #fff;
+            border-top: 1px solid #eee;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #userInput:focus {
+            border-color: #0078ff;
+        }
+
+        #sendBtn {
+            background: #0078ff;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            margin-right: 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        #sendBtn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <span class="status-dot"></span>
+            <h3>??????? ?????</h3>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="message bot-message">
+                ????? ??! ??? ??? ????? ???. ??? ?????? ??????? ??????
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="???? ?????? ???..." autocomplete="off">
+            <button id="sendBtn">?????</button>
+        </div>
+    </div>
+
+    <script>
+        // JS ??????? ????????
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('userInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const messageText = userInput.value.trim();
+
+            if (messageText === '') return;
+
+            // 1. ????? ????? ???????? ??? ??????
+            appendMessage(messageText, 'user-message');
+            userInput.value = '';
+
+            // 2. ?????? ????? ????? ????? ??? 0.6 ?????
+            setTimeout(() => {
+                const botResponse = getBotResponse(messageText);
+                appendMessage(botResponse, 'bot-message');
+            }, 600);
+        }
+
+        function appendMessage(text, className) {
+            const chatBox = document.getElementById('chatBox');
+            const messageElement = document.createElement('div');
+            
+            messageElement.classList.add('message', className);
+            messageElement.innerText = text;
+            
+            chatBox.appendChild(messageElement);
+            
+            // ?????? ???????? ????? ????????
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // ???? ?????? ?????????
+        function getBotResponse(input) {
+            const message = input.trim();
+
+            if (message.includes('?????') || message.includes('????') || message.includes('????')) {
+                return "????? ??! ??? ???? ??????";
+            } else if (message.includes('??? ????')) {
+                return "??? ???? ??? ?????? ???? ???? ????? ???! ????? ??????.";
+            } else if (message.includes('????')) {
+                return "???? '??????? ?????'? ?? ?????? ?????? ?????? ??????.";
+            } else if (message.includes('??????')) {
+                return "?????? ??????? ??? ??? ??????? ??????? ??????. ??? ????? ?? ????!";
+            } else {
+                return "??? ?? ??? ?????? ?? ???? ??? ?????? ?????? ???.";
+            }
+        }
+    </script>
+</body>
+</html>
