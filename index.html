@@ -1,204 +1,89 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+// The HTML, CSS, and Client-side JavaScript combined into one single string
+const htmlTemplate = `
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوت دردشة ذكي</title>
+    <title>All-in-One Chat Box</title>
     <style>
-        /* CSS للتصميم والمظهر */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .chat-container {
-            width: 400px;
-            max-width: 95%;
-            height: 600px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* رأس المحادثة */
-        .chat-header {
-            background: #0078ff;
-            color: white;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #2ecc71;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* صندوق الرسائل */
-        .chat-box {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            background: #f9f9f9;
-        }
-
-        /* تصميم الرسائل */
-        .message {
-            max-width: 75%;
-            padding: 10px 15px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .bot-message {
-            background: #e9ecef;
-            color: #333;
-            align-self: flex-start;
-            border-bottom-right-radius: 3px;
-        }
-
-        .user-message {
-            background: #0078ff;
-            color: white;
-            align-self: flex-end;
-            border-bottom-left-radius: 3px;
-        }
-
-        /* منطقة الإدخال */
-        .chat-input-area {
-            display: flex;
-            padding: 15px;
-            background: #fff;
-            border-top: 1px solid #eee;
-        }
-
-        #userInput {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            outline: none;
-            font-size: 14px;
-        }
-
-        #userInput:focus {
-            border-color: #0078ff;
-        }
-
-        #sendBtn {
-            background: #0078ff;
-            color: white;
-            border: none;
-            padding: 0 20px;
-            margin-right: 10px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        #sendBtn:hover {
-            background: #0056b3;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #eef2f3; }
+        #chat-container { max-width: 600px; margin: 30px auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: #333; text-align: center; font-weight: 600; }
+        #messages { list-style-type: none; padding: 10px; height: 350px; overflow-y: auto; border: 1px solid #e0e0e0; margin-bottom: 15px; border-radius: 8px; background: #fdfdfd; }
+        #messages li { padding: 10px 14px; border-bottom: 1px solid #f1f1f1; word-wrap: break-word; color: #444; }
+        #messages li:nth-child(odd) { background: #f9f9f9; }
+        #form { display: flex; gap: 10px; }
+        #input { flex-grow: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; outline: none; font-size: 14px; transition: border 0.2s; }
+        #input:focus { border-color: #007bff; }
+        #send-btn { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        #send-btn:hover { background: #0056b3; }
     </style>
 </head>
 <body>
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <span class="status-dot"></span>
-            <h3>المساعد الذكي</h3>
-        </div>
-
-        <div class="chat-box" id="chatBox">
-            <div class="message bot-message">
-                أهلاً بك! أنا بوت دردشة آلي. كيف يمكنني مساعدتك اليوم؟
-            </div>
-        </div>
-
-        <div class="chat-input-area">
-            <input type="text" id="userInput" placeholder="اكتب رسالتك هنا..." autocomplete="off">
-            <button id="sendBtn">إرسال</button>
-        </div>
+    <div id="chat-container">
+        <h2>💬 Friends Chat Room</h2>
+        <ul id="messages"></ul>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" placeholder="Type your message here..." /><button id="send-btn">Send</button>
+        </form>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // JS البرمجة والتفاعل
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-        document.getElementById('userInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+        const socket = io();
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value.trim()) {
+                socket.emit('chat message', input.value);
+                input.value = '';
             }
         });
 
-        function sendMessage() {
-            const userInput = document.getElementById('userInput');
-            const messageText = userInput.value.trim();
-
-            if (messageText === '') return;
-
-            // 1. إضافة رسالة المستخدم إلى الشاشة
-            appendMessage(messageText, 'user-message');
-            userInput.value = '';
-
-            // 2. محاكاة تفكير البوت والرد بعد 0.6 ثانية
-            setTimeout(() => {
-                const botResponse = getBotResponse(messageText);
-                appendMessage(botResponse, 'bot-message');
-            }, 600);
-        }
-
-        function appendMessage(text, className) {
-            const chatBox = document.getElementById('chatBox');
-            const messageElement = document.createElement('div');
-            
-            messageElement.classList.add('message', className);
-            messageElement.innerText = text;
-            
-            chatBox.appendChild(messageElement);
-            
-            // النزول التلقائي لأسفل المحادثة
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        // نظام الردود التلقائية
-        function getBotResponse(input) {
-            const message = input.trim();
-
-            if (message.includes('مرحبا') || message.includes('أهلا') || message.includes('سلام')) {
-                return "أهلاً بك! كيف حالك اليوم؟";
-            } else if (message.includes('كيف حالك')) {
-                return "أنا مجرد كود برمجي، لكني أعمل بأفضل حال! شكراً لسؤالك.";
-            } else if (message.includes('اسمك')) {
-                return "اسمي 'المساعد الذكي'، تم تطويري بواسطة الجافا سكريبت.";
-            } else if (message.includes('مساعدة')) {
-                return "يمكنني الإجابة على بعض الأسئلة البسيطة حالياً. جرب سؤالي عن اسمي!";
-            } else {
-                return "أنا ما زلت أتعلم، لم أفهم هذه الجملة تماماً بعد.";
-            }
-        }
+        socket.on('chat message', (msg) => {
+            const item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+            messages.scrollTop = messages.scrollHeight;
+        });
     </script>
 </body>
 </html>
+`;
+
+// Serve the mixed HTML string directly when someone visits the site
+app.get('/', (req, res) => {
+    res.send(htmlTemplate);
+});
+
+// Manage user connections and real-time messages
+io.on('connection', (socket) => {
+    console.log('User connected');
+
+    socket.on('chat message', (msg) => {
+        io.emit('chat message', msg); // Broadcasts message to everyone
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
+});
+
+// Start the server
+const PORT = 3000;
+server.listen(PORT, () => {
+    console.log(`Server running! Go to http://localhost:${PORT}`);
+});
